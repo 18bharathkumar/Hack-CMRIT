@@ -40,10 +40,6 @@ app.get("/getCFSL/:address", async (req, res) => {
   }
 });
 
-// app.get("/government/cases", async (req, res) => {
-//   const cases = await prisma.case.findMany({ include: { finalReport: true } });
-//   res.json(cases);
-// });
 
 // CFSL ENDPOINTS
 
@@ -53,10 +49,12 @@ app.post("/addFSL", async (req, res) => {
   res.json(fsl);
 });
 
-// app.get("/cfsl/:cfslId/cases", async (req, res) => {
-//   const cases = await prisma.case.findMany({ where: { fsl: { cfslId: req.params.cfslId } }, include: { finalReport: true } });
-//   res.json(cases);
-// });
+app.get("/getFSLs/:cfslAddress", async (req, res) => {
+  const fsl = await prisma.fSL.findMany({ where: { cfslId: req.params.cfslAddress } });
+  res.json(fsl);
+});
+
+
 
 // FSL ENDPOINTS
 
@@ -66,46 +64,13 @@ app.post("/addFSLMember", async (req, res) => {
   res.json(member);
 });
 
-app.post("/acceptCASE", async (req, res) => {
-  const { caseId, fslId } = req.body;
-  const updated = await prisma.case.update({ where: { id: caseId }, data: { accepted: true, fslId } });
-  res.json(updated);
+app.get("/getFSLMembers/:fslAddress", async (req, res) => {
+  const members = await prisma.fSLMember.findMany({ where: { fslId: req.params.fslAddress } });
+  res.json(members);
 });
 
 
-// app.post("/fsl/report", async (req, res) => {
-//   const { id, caseId, headId, memberIds } = req.body;
-//   const report = await prisma.report.create({
-//     data: {
-//       id,
-//       caseId,
-//       headId,
-//       members: { connect: memberIds.map((id: any) => ({ id })) },
-//     },
-//   });
-//   res.json(report);
-// });
 
-// app.post("/fsl/final-report", async (req, res) => {
-//   const { caseId, ipfsHash } = req.body;
-//   const report = await prisma.finalReport.create({ data: { caseId, ipfsHash } });
-//   res.json(report);
-// });
-
-// app.get("/fsl/reports", async (req, res) => {
-//   const reports = await prisma.report.findMany({ include: { members: true, head: true } });
-//   res.json(reports);
-// });
-
-// app.get("/fsl/final-report/:caseId", async (req, res) => {
-//   const final = await prisma.finalReport.findUnique({
-//     where: { caseId: req.params.caseId },
-//     include: {
-//       reports: { include: { head: true, members: true, signedBy: true } },
-//     },
-//   });
-//   res.json(final);
-// });
 
 app.post("/addpoliceStation", async (req, res) => {
   const { address, ipfsHash, fslId } = req.body;
@@ -114,38 +79,12 @@ app.post("/addpoliceStation", async (req, res) => {
 });
 
 
+app.get("/getPoliceStations/:fslAddress", async (req, res) => {
+  const policeStations = await prisma.policeStation.findMany({ where: { fslId: req.params.fslAddress } });
+  res.json(policeStations);
+}
+);
 
-
-// POLICE STATION ENDPOINTS
-
-// app.post("/police/case", async (req, res) => {
-//   const { id, ipfsHash, policeId } = req.body;
-//   const newCase = await prisma.case.create({ data: { id, ipfsHash, policeId } });
-//   res.json(newCase);
-// });
-
-// app.get("/police/final-report/:caseId", async (req, res) => {
-//   const report = await prisma.finalReport.findUnique({ where: { caseId: req.params.caseId }, include: { reports: true } });
-//   res.json(report);
-// });
-
-// FSL MEMBER ENDPOINTS
-
-// app.get("/member/reports/:memberId", async (req, res) => {
-//   const memberId = req.params.memberId;
-//   const headed = await prisma.report.findMany({ where: { headId: memberId }, include: { members: true } });
-//   const member = await prisma.report.findMany({ where: { members: { some: { id: memberId } } }, include: { members: true } });
-//   res.json({ headed, member });
-// });
-
-// app.post("/member/signature", async (req, res) => {
-//   const { reportId, memberId } = req.body;
-//   const report = await prisma.report.update({
-//     where: { id: reportId },
-//     data: { signedBy: { connect: { id: memberId } } },
-//   });
-//   res.json(report);
-// });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
