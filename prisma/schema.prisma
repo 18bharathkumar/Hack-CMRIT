@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") 
+}
+
+model User {
+  id        String   @id @default(uuid())
+  address   String   @unique
+  role      String
+  ipfsHash  String
+
+  // Optional: Linked to FSL if the user belongs to one
+  fsl       FSL?     @relation("UserFSL", fields: [fslId], references: [id])
+  fslId     String?
+}
+
+model CFSL {
+  id        String   @id @default(uuid())
+  address   String   @unique
+  ipfsHash  String
+
+  fsls      FSL[]
+}
+
+model FSL {
+  id              String   @id @default(uuid())
+  address         String   @unique
+  ipfsHash        String
+
+  cfslId          String
+  cfsl            CFSL     @relation(fields: [cfslId], references: [id])
+
+  members         FSLMember[]
+  policeStations  PoliceStation[]
+  cases           Case[]
+  users           User[]   @relation("UserFSL")
+}
+
+model FSLMember {
+  id             String   @id @default(uuid())
+  address        String   @unique
+  ipfsHash       String
+
+  fslId          String
+  fsl            FSL      @relation(fields: [fslId], references: [id])
+
+  reports        Report[] @relation("ReportMembers")
+  signedReports  Report[] @relation("SignedReports")
+  headedReports  Report[] @relation("HeadedReports") 
+}
+
+model PoliceStation {
+  id         String   @id @default(uuid())
+  address    String   @unique
+  ipfsHash   String
+
+  fslId      String
+  fsl        FSL      @relation(fields: [fslId], references: [id])
+
+  cases      Case[]
+}
+
+model Case {
+  id          String   @id
+  ipfsHash    String
+
+  policeId    String
+  police      PoliceStation @relation(fields: [policeId], references: [id])
+
+  fslId       String?
+  fsl         FSL?     @relation(fields: [fslId], references: [id])
+
+  accepted    Boolean  @default(false)
+  report      Report?
+  finalReport FinalReport? // 👈 Added this line to fix the validation error
+}
+
+
+
+model FinalReport {
+  id         String   @id @default(uuid())
+  caseId     String   @unique
+  ipfsHash   String
+  createdAt  DateTime @default(now())
+
+  case       Case     @relation(fields: [caseId], references: [id])
+  reports    Report[]
+}
+
+model Report {
+  id         String   @id
+  caseId     String   @unique
+  case       Case     @relation(fields: [caseId], references: [id])
+
+  headId     String
+  head       FSLMember @relation("HeadedReports", fields: [headId], references: [id])
+
+  members    FSLMember[] @relation("ReportMembers")
+  signedBy   FSLMember[] @relation("SignedReports")
+
+  finalReportId String?
+  finalReport   FinalReport? @relation(fields: [finalReportId], references: [id])
+}
